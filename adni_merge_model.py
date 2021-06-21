@@ -14,27 +14,36 @@ from sklearn.metrics import matthews_corrcoef, confusion_matrix
 
 from collections import Counter
 
-def save_selected_features(df):
+def save_selected_features(adnimerge_df):
     """
     Save three different preprocessed data as CSV from ADNIMERGE data
        1. only bl columns and rows 
        2. current columns. last visit
        3. current columns. all visit
     
-    Drops rows with empty field
+    Fills in missing values
     """ 
 
     # Select columns 
-    df = df[["RID", "EXAMDATE", "DX_bl", "AGE", "PTGENDER","PTEDUCAT", "PTMARRY", "APOE4", \
+    df = adnimerge_df[["RID", "EXAMDATE", "DX_bl", "AGE", "PTGENDER","PTEDUCAT", "PTMARRY", "APOE4", \
         "CDRSB", "ADAS11","ADAS13","ADASQ4","MMSE","RAVLT_immediate","RAVLT_learning","RAVLT_forgetting","RAVLT_perc_forgetting","LDELTOTAL","TRABSCOR", \
             "Ventricles","Hippocampus","WholeBrain","Entorhinal","Fusiform","MidTemp","DX", \
             "CDRSB_bl","ADAS11_bl","ADAS13_bl","ADASQ4_bl","MMSE_bl","RAVLT_immediate_bl","RAVLT_learning_bl","RAVLT_forgetting_bl","RAVLT_perc_forgetting_bl","LDELTOTAL_BL","TRABSCOR_bl", \
             "Ventricles_bl","Hippocampus_bl","WholeBrain_bl","Entorhinal_bl","Fusiform_bl","MidTemp_bl","FDG_bl"]]
 
+    def convert_to_float(df):
+        """
+        Convert continuous columns to float type
+        """
+        cdf = df.copy()
+        cont_cols = list(cdf.drop(['PTMARRY', 'PTGENDER', 'RID', 'EXAMDATE', 'DX_bl', 'DX']).columns)
+        cdf[cont_cols] = cdf[cont_cols].apply(pd.to_numeric)
+        return cdf
+
+    df = convert_to_float(df)
+    
     # Sort in ascending order by RID, EXAMDATE. Take first / last rows of each RID.
     sorted_df = df.sort_values(by=['RID', 'EXAMDATE'], ignore_index=True)
-    # if ignore_index does not work  
-    # sorted_df.reset_index(inplace=True, drop=True)
 
     bl_df = sorted_df.drop_duplicates(subset=['RID'], keep='first')
     lv_df = sorted_df.drop_duplicates(subset=['RID'], keep='last')
@@ -52,18 +61,22 @@ def save_selected_features(df):
         "ADAS11","ADAS13","ADASQ4","MMSE","RAVLT_immediate","RAVLT_learning","RAVLT_forgetting","RAVLT_perc_forgetting","LDELTOTAL","TRABSCOR", \
             "Ventricles","Hippocampus","WholeBrain","Entorhinal","Fusiform","MidTemp","DX"]]
 
-    # Filter rows : 
-    #   row with any empty field
-    def drop_rows_with_empty_field(df):
-        nan_value = float("NaN")
-        dropped_df = df.replace("", nan_value)
-        dropped_df.dropna(inplace=True)
-        print(f'dropped {len(df) - len(dropped_df)} rows')
-        return dropped_df
+    # To drop rows with missing values 
+    # df.dropna(inplace=True)
     
-    bl_df = drop_rows_with_empty_field(bl_df)
-    lv_df = drop_rows_with_empty_field(lv_df)
-    av_df = drop_rows_with_empty_field(av_df)
+    def fill_missing_values(df):
+        """
+        Fill missing values with avg. value of same class
+        """
+        # exclude categorical columns: PTMARRY, PTGENDER
+        cont_cols = list(df.drop(['PTMARRY', 'PTGENDER', 'DX']).columns)
+        fdf = df.copy()
+        fdf[cont_cols] = fdf[cont_cols].fillna(fdf.groupby('DX')[cont_cols].transform('mean'))
+        return fdf
+
+    bl_df = fill_missing_values(bl_df)
+    lv_df = fill_missing_values(lv_df)
+    av_df = fill_missing_values(av_df)
 
     bl_df.to_csv('data/generated_data/adnimerge_bl.csv', index=False)
     lv_df.to_csv('data/generated_data/adnimerge_lv.csv', index=False)
@@ -217,10 +230,11 @@ def print_confusion_matrix(cv_confusion_mats, selected_classifier_idx):
     print(f"conf_mat_pct_meaned\n{conf_mat_pct_meaned}")
 
 if __name__ == '__main__':
-    df = pd.read_csv("data/ADNIMERGE.csv")
-    print('ADNI Merge Dataset\n', df)
+    adnimerge_df = pd.read_csv("data/ADNIMERGE.csv")
+    print('ADNI Merge Dataset\n', adnimerge_df)
+    print (f'Data type of columns\n{adnimerge_df.dtypes}')
     
-    save_selected_features(df)
+    save_selected_features(adnimerge_df)
     
     bl_df = pd.read_csv("data/generated_data/adnimerge_bl.csv")
     lv_df = pd.read_csv("data/generated_data/adnimerge_lv.csv")
@@ -240,7 +254,6 @@ if __name__ == '__main__':
         cv_results_df.to_csv(f"results/results_{train_data_name}.csv", index=False)
 
         # print accuracy
-        # print(cv_results_df.mean(axis = 0))
         print('cv_results_df mean:\n', cv_results_df.mean())
 
         print_confusion_matrix(cv_confusion_mats, 3)
