@@ -36,7 +36,7 @@ def save_selected_features(adnimerge_df):
         Convert continuous columns to float type
         """
         cdf = df.copy()
-        cont_cols = list(cdf.drop(['PTMARRY', 'PTGENDER', 'RID', 'EXAMDATE', 'DX_bl', 'DX']).columns)
+        cont_cols = list(cdf.drop(columns=['PTMARRY', 'PTGENDER', 'RID', 'EXAMDATE', 'DX_bl', 'DX']).columns)
         cdf[cont_cols] = cdf[cont_cols].apply(pd.to_numeric)
         return cdf
 
@@ -67,10 +67,16 @@ def save_selected_features(adnimerge_df):
     def fill_missing_values(df):
         """
         Fill missing values with avg. value of same class
-        """
-        # exclude categorical columns: PTMARRY, PTGENDER
-        cont_cols = list(df.drop(['PTMARRY', 'PTGENDER', 'DX']).columns)
+        """ 
         fdf = df.copy()
+
+        # exclude rows with empty DX values
+        fdf['DX'].replace("", float("NaN"), inplace=True)
+        fdf.dropna(how='any', subset=['DX'], inplace=True)
+        print(f'Dropped {len(df) - len(fdf)} rows with empty DX values')
+
+        # fill in missing values 
+        cont_cols = list(df.drop(columns=['PTMARRY', 'PTGENDER', 'DX']).columns)
         fdf[cont_cols] = fdf[cont_cols].fillna(fdf.groupby('DX')[cont_cols].transform('mean'))
         return fdf
 
@@ -251,7 +257,7 @@ if __name__ == '__main__':
         model = Model()
         cv_results_df, cv_confusion_mats = model.build_model(X, y)
         
-        cv_results_df.to_csv(f"results/results_{train_data_name}.csv", index=False)
+        cv_results_df.to_csv(f"results/results_{train_data_name}.tsv", index=False, sep='\t')
 
         # print accuracy
         print('cv_results_df mean:\n', cv_results_df.mean())

@@ -1,5 +1,15 @@
 # Alzheimer Notes 
 
+### Training on ADNI merge 
+After filling in missing values and dropping empty DX, 
+Baseline - ('CN', 828), ('Dementia', 402), ('MCI', 1053)
+Last visit - ('CN', 400), ('Dementia', 548), ('MCI', 542)
+All visit - ('CN', 3685), ('Dementia', 2355), ('MCI', 4715)
+
+Number of features without CDRSB
+Baseline - 22
+Last visit - 20
+All visit - 20
 
 ### Tanvir sir's code 
 
