@@ -20,6 +20,8 @@ def save_selected_features(df):
        1. only bl columns and rows 
        2. current columns. last visit
        3. current columns. all visit
+    
+    Drops rows with empty field
     """ 
 
     # Select columns 
@@ -63,9 +65,9 @@ def save_selected_features(df):
     lv_df = drop_rows_with_empty_field(lv_df)
     av_df = drop_rows_with_empty_field(av_df)
 
-    bl_df.to_csv('adnimerge_bl.csv', index=False)
-    lv_df.to_csv('adnimerge_lv.csv', index=False)
-    av_df.to_csv('adnimerge_av.csv', index=False) 
+    bl_df.to_csv('data/generated_data/adnimerge_bl.csv', index=False)
+    lv_df.to_csv('data/generated_data/adnimerge_lv.csv', index=False)
+    av_df.to_csv('data/generated_data/adnimerge_av.csv', index=False) 
 
 def preprocess(df):
     """
@@ -220,9 +222,9 @@ if __name__ == '__main__':
     
     save_selected_features(df)
     
-    bl_df = pd.read_csv("adnimerge_bl.csv")
-    lv_df = pd.read_csv("adnimerge_lv.csv")
-    av_df = pd.read_csv("adnimerge_av.csv")
+    bl_df = pd.read_csv("data/generated_data/adnimerge_bl.csv")
+    lv_df = pd.read_csv("data/generated_data/adnimerge_lv.csv")
+    av_df = pd.read_csv("data/generated_data/adnimerge_av.csv")
 
     for train_df, train_data_name in zip([bl_df, lv_df, av_df], ['bl', 'lv', 'av']):
         print('train_df\n', train_df)
