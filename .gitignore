@@ -1,4 +1,13 @@
+# Ignore images
 *.png
+
+# Ignore downloaded and generated data or results
+*.csv
 data/
-resources/
 results/
+
+# Ignore downloaded resources
+resources/
+
+# Ignore temp .lock files
+*lock*
