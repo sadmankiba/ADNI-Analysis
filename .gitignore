@@ -3,7 +3,9 @@
 
 # Ignore downloaded and generated data or results
 *.csv
+!ADNIMERGE.csv
 data/
+
 results/
 
 # Ignore downloaded resources
